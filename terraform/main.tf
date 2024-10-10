@@ -2,12 +2,6 @@ resource "random_pet" "unique_suffix" {
   length = 2
 }
 
-resource "aws_instance" "example" {
-  ami = "ami-123456"
-  instance_type = "t2.micro"
-  security_groups = ["sg-123456
-}
-
 data "aws_availability_zones" "available" {
   state = "available"
 }
