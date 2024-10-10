@@ -6,6 +6,7 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+## from networking folder
 module "networking" {
   source             = "./networking"
   project            = var.project
