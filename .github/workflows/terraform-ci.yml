@@ -20,10 +20,13 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
-    - name: Terraform Format
-      run: terraform fmt -recursive -check
-      env:
-        TF_IN_AUTOMATION: true
+    - name: Check Terraform Format
+      id: fmt
+      run: |
+        if ! terraform fmt -recursive -check; then
+          echo "Terraform format issues found."
+          exit 1
+        fi
 
     - name: Terraform Initialize
       run: terraform init -backend=false
