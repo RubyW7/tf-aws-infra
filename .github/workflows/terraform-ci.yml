@@ -1,9 +1,12 @@
-name: 'Terraform CI'
+name: 'Terraform'
 
 on:
   pull_request:
     branches:
       - main  
+  push:
+    branches:
+      - A3 
 
 jobs:
   terraform:
