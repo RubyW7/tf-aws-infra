@@ -17,13 +17,17 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: '1.9.7' 
+    - name: Terraform Format
+      run: terraform fmt -recursive -check
+      env:
+        TF_IN_AUTOMATION: true
 
-    - name: terraform format
-      uses: dflook/terraform-fmt@1.29.1
+    - name: Terraform Initialize
+      run: terraform init
+      env:
+        TF_IN_AUTOMATION: true
 
-    - name: terraform validate
-      uses: dflook/terraform-validate@v1
+    - name: Terraform Validate
+      run: terraform validate
+      env:
+        TF_IN_AUTOMATION: true
