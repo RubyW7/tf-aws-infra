@@ -1,4 +1,4 @@
-name: 'Terraform'
+name: 'Terraform CI'
 
 on:
   pull_request_target:
@@ -23,7 +23,7 @@ jobs:
         terraform_version: '1.9.7' 
 
     - name: terraform format
-      users: dflook/terraform-fmt@1.29.1
+      uses: dflook/terraform-fmt@1.29.1
 
     - name: terraform validate
-      users: dflook/terraform-validate@v1
+      uses: dflook/terraform-validate@v1
