@@ -22,4 +22,4 @@ resource "random_id" "this" {
   }
 
   # This will cause a validation error because 'byte_length' is mandatory and not provided
-}
+};;
