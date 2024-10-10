@@ -6,6 +6,10 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+resource "aws_instance" "example" {
+    instance_type = "t2.micro" # error
+}
+
 module "networking" {
   source             = "./networking"
   project            = var.project
