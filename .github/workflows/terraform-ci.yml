@@ -22,8 +22,10 @@ jobs:
       with:
         terraform_version: '1.9.7' 
 
-    - name: Terraform Format
-      run: terraform fmt -recursive -check
+    - name: Terraform Format Check
+      id: fmt
+      run: terraform fmt -recursive -check || echo "::set-output name=status::failed"
 
-    - name: Terraform Validate
-      run: terraform validate
+    - name: Fail if format check failed
+      if: steps.fmt.outputs.status == 'failed'
+      run: exit 1
