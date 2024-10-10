@@ -27,7 +27,7 @@ jobs:
           echo "Terraform format issues found."
           exit 1
         fi
-        shell: bash
+      shell: bash
 
     - name: Terraform Initialize
       run: terraform init -backend=false
