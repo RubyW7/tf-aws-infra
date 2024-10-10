@@ -15,11 +15,3 @@ module "networking" {
   availability_zones = data.aws_availability_zones.available.names
   unique_suffix      = random_pet.unique_suffix.id
 }
-
-resource "random_id" "this" {
-  keepers = {    # This opening brace should be on the next line to trigger a fmt error
-  id = "some-id"
-  }
-
-  # This will cause a validation error because 'byte_length' is mandatory and not provided
-};;
