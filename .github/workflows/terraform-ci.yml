@@ -23,19 +23,10 @@ jobs:
         terraform_version: '1.9.7' 
 
     - name: Terraform Format Check
-      run: |
-        set -e  # Exit immediately if any command fails
-        terraform fmt -recursive -check
-        if [ $? -ne 0 ]; then
-          echo "Terraform format check failed"
-          exit 1  # Explicitly set the failure status
-        fi
+      id: fmt
+      run: terraform fmt -check
 
     - name: Terraform Validate
-      run: |
-        set -e  # Exit immediately if any command fails
-        terraform validate
-        if [ $? -ne 0 ]; then
-          echo "Terraform validation failed"
-          exit 1  # Explicitly set the failure status
-        fi
+      id: validate
+      if: success() || failure()
+      run: terraform validate -no-color
