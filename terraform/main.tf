@@ -6,6 +6,12 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+resource "aws_instance" "example" {
+  security_groups = ["sg-123456
+  }
+}
+
+
 ## from networking folder
 module "networking" {
   source             = "./networking"
