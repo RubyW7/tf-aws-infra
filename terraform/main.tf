@@ -15,7 +15,7 @@ resource "aws_instance" "example" {
    instance_type = "t2.micro"
 }
 
-
+## from networking folder
 module "networking" {
   source             = "./networking"
   project            = var.project
