@@ -38,7 +38,11 @@ terraform apply -var="region=us-east-1" -var="vpc_cidr=10.0.0.0/16"
 ### 3. Clean Up Networking Resources
 For example:
 ```bash
+terraform destroy -var="region=us-east-1" -var="vpc_cidr=10.0.0.0/16"
+```
+
+### re-init:
+```bash
 rm -rf .terraform
 rm terraform.tfstate terraform.tfstate.backup
-terraform destroy -var="region=us-east-1" -var="vpc_cidr=10.0.0.0/16"
 ```
