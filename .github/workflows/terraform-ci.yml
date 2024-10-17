@@ -24,6 +24,7 @@ jobs:
       id: fmt
       run: terraform fmt -recursive -check
 
+
     - name: Terraform Initialize
       run: terraform init -backend=false
       env:

@@ -9,3 +9,8 @@ output "public_subnet_ids" {
 output "private_subnet_ids" {
   value = aws_subnet.private_subnet[*].id
 }
+
+output "app_sg_id" {
+  description = "The ID of the application security group."
+  value = aws_security_group.app_sg.id
+}
