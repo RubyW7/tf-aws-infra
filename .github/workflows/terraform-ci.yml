@@ -22,12 +22,8 @@ jobs:
 
     - name: Check Terraform Format
       id: fmt
-      run: |
-        if ! terraform fmt -recursive -check; then
-          echo "Terraform format issues found."
-          exit 1
-        fi
-      shell: bash
+      run: terraform fmt -recursive -check
+
 
     - name: Terraform Initialize
       run: terraform init -backend=false
