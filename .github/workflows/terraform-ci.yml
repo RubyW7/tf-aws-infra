@@ -2,11 +2,9 @@ name: 'Terraform CI'
 
 on:
   pull_request_target:
+    types: [opened, synchronize, reopened]
     branches:
       - main  
-  push:
-    branches:
-      - A3 
 
 jobs:
   terraform:
@@ -15,7 +13,9 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
@@ -26,11 +26,14 @@ jobs:
 
 
     - name: Terraform Initialize
-      run: terraform init -backend=false
+      run: |
+        cd terraform
+        terraform init -backend=false
       env:
         TF_IN_AUTOMATION: true
 
     - name: Terraform Validate
       run: terraform validate
-      env:
+      env: |
+        cd terraform
         TF_IN_AUTOMATION: true
