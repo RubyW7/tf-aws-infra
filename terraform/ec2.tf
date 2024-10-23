@@ -1,7 +1,7 @@
 resource "aws_instance" "web_app" {
-  ami           = var.ami_id
-  instance_type = var.instance_type
-  subnet_id     = "subnet-02d41e81eddf16052"
+  ami                    = var.ami_id
+  instance_type          = var.instance_type
+  subnet_id              = "subnet-02d41e81eddf16052"
   vpc_security_group_ids = [module.networking.app_sg_id]
 
   root_block_device {
