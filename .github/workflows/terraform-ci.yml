@@ -32,8 +32,7 @@ jobs:
       env:
         TF_IN_AUTOMATION: true
 
-    - name: Terraform Validate
-      run: terraform validate
-      env: |
+    - name: Change directory and Validate Terraform
+      run: |
         cd terraform
         terraform validate
