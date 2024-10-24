@@ -1,3 +1,11 @@
+resource "random_pet" "unique_suffix" {
+  length = 2
+}
+
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
 # create VPC
 resource "aws_vpc" "main_vpc" {
   cidr_block           = var.vpc_cidr
@@ -47,7 +55,7 @@ resource "aws_subnet" "public_subnet" {
   vpc_id                  = aws_vpc.main_vpc.id
   cidr_block              = cidrsubnet(var.vpc_cidr, 8, count.index)
   map_public_ip_on_launch = true
-  availability_zone       = element(var.availability_zones, count.index)
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
 
   tags = {
     Name = "${var.project}-${var.unique_suffix}-public-subnet-${count.index + 1}"
@@ -59,7 +67,7 @@ resource "aws_subnet" "private_subnet" {
   count             = 3
   vpc_id            = aws_vpc.main_vpc.id
   cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index + 3)
-  availability_zone = element(var.availability_zones, count.index)
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
 
   tags = {
     Name = "${var.project}-${var.unique_suffix}-private-subnet-${count.index + 1}"
@@ -77,44 +85,4 @@ resource "aws_route_table_association" "private_association" {
   count          = 3
   subnet_id      = element(aws_subnet.private_subnet.*.id, count.index)
   route_table_id = aws_route_table.private_rt.id
-}
-
-resource "aws_security_group" "app_sg" {
-  name        = "app-security-group"
-  description = "Security group for web application EC2 instance"
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 }

@@ -13,12 +13,8 @@ variable "vpc_cidr" {
   type        = string
 }
 
-variable "availability_zones" {
-  description = "List of availability zones"
-  type        = list(string)
-}
-
 variable "unique_suffix" {
   description = "Unique suffix for resource names"
   type        = string
 }
+
