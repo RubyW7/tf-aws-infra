@@ -31,3 +31,8 @@ jobs:
         terraform init -backend=false
       env:
         TF_IN_AUTOMATION: true
+
+    - name: Change directory and Validate Terraform
+      run: |
+        cd terraform
+        terraform validate
