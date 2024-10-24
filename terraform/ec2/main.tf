@@ -78,8 +78,8 @@ resource "aws_db_subnet_group" "db_subnet_group" {
 }
 
 resource "aws_db_parameter_group" "custom_postgres_params" {
-  name        = "custom-postgres-params"
-  family      = "postgres16"
+  name   = "custom-postgres-params"
+  family = "postgres16"
 
   parameter {
     name  = "log_connections"
@@ -97,30 +97,30 @@ resource "aws_db_parameter_group" "custom_postgres_params" {
 }
 
 resource "aws_db_instance" "my_rds" {
-  allocated_storage    = 20
+  allocated_storage     = 20
   max_allocated_storage = 100
-  engine               = "postgres"
-  instance_class       = "db.t3.micro"
-  db_name                 = var.db_name
-  username             = var.db_username
-  password             = var.db_password
-  parameter_group_name = aws_db_parameter_group.custom_postgres_params.name
-  db_subnet_group_name = aws_db_subnet_group.db_subnet_group.name
-  skip_final_snapshot  = true
+  engine                = "postgres"
+  instance_class        = "db.t3.micro"
+  db_name               = var.db_name
+  username              = var.db_username
+  password              = var.db_password
+  parameter_group_name  = aws_db_parameter_group.custom_postgres_params.name
+  db_subnet_group_name  = aws_db_subnet_group.db_subnet_group.name
+  skip_final_snapshot   = true
 
   vpc_security_group_ids = [aws_security_group.db_sg.id]
 
-  multi_az             = false
-  publicly_accessible  = false
+  multi_az            = false
+  publicly_accessible = false
   tags = {
     Name = "MyRDSInstance"
   }
 }
 
 resource "aws_instance" "web_server" {
-  ami           = var.ami_id
-  instance_type = "t2.micro"
-  subnet_id     = var.subnet_id
+  ami                    = var.ami_id
+  instance_type          = "t2.micro"
+  subnet_id              = var.subnet_id
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
   root_block_device {

@@ -21,7 +21,7 @@ resource "aws_security_group" "db_sg" {
 
 resource "aws_db_subnet_group" "db_subnet_group" {
   name       = "my-db-subnet-group"
-  subnet_ids = [var.subnet_ids]
+  subnet_ids = var.subnet_ids
 
   tags = {
     Name = "My DB Subnet Group"
@@ -29,8 +29,8 @@ resource "aws_db_subnet_group" "db_subnet_group" {
 }
 
 resource "aws_db_parameter_group" "custom_postgres_params" {
-  name        = "custom-postgres-params"
-  family      = "postgres17"
+  name   = "custom-postgres-params"
+  family = "postgres16"
 
   parameter {
     name  = "log_connections"
@@ -50,21 +50,23 @@ resource "aws_db_parameter_group" "custom_postgres_params" {
 
 # RDS Instance
 resource "aws_db_instance" "rds_instance" {
-  identifier           = "csye6225"
-  engine               = "postgres"
-  instance_class       = var.db_instance_class
-  allocated_storage    = 20
-  max_allocated_storage = 100
-  db_parameter_group_name = aws_db_parameter_group.custom_postgres_params.name
-  db_subnet_group_name = aws_db_subnet_group.db_subnet_group.name
+  identifier             = "csye6225"
+  engine                 = "postgres"
+  instance_class         = var.db_instance_class
+  allocated_storage      = 20
+  max_allocated_storage  = 100
+  db_subnet_group_name   = aws_db_subnet_group.db_subnet_group.name
   vpc_security_group_ids = [aws_security_group.db_sg.id]
-  
-  username             = "csye6225"
-  password             = "password"
-  db_name              = "csye6225"
-  
-  multi_az             = false
-  publicly_accessible  = false
+
+  username = "csye6225"
+  password = "password"
+  db_name  = "csye6225"
+
+  multi_az            = false
+  publicly_accessible = false
+
+  parameter_group_name = aws_db_parameter_group.custom_postgres_params.name
+  skip_final_snapshot  = true
 
   tags = {
     Name = "rds-instance"
