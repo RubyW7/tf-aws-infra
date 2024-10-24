@@ -135,16 +135,14 @@ resource "aws_instance" "web_server" {
     apt-get update -y
     apt-get upgrade -y
 
-    
-    curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash -
-    apt-get install -y nodejs
+    touch /opt/csye6225/.env
+    echo "DB_HOST='${aws_db_instance.my_rds.endpoint}'" >> /opt/csye6225/webapp/.env
+    echo "DB_USER='csye6225'" >> /etc/environment >> /opt/csye6225/webapp/.env
+    echo "DB_PASSWORD='Wyd0718520'" >> /opt/csye6225/webapp/.env
+    echo "DB_NAME='csye6225'" >> /opt/csye6225/webapp/.env
+    echo "DB_PORT='5432'" >> /opt/csye6225/webapp/.env
 
-    apt-get install -y postgresql-client
-
-    echo "export DB_HOST='${aws_db_instance.my_rds.endpoint}'" >> /etc/environment
-    echo "export DB_USER='username'" >> /etc/environment
-    echo "export DB_PASS='password'" >> /etc/environment
-    echo "export DB_NAME='dbname'" >> /etc/environment
+    source /opt/csye6225/.env
 
   EOF
 
