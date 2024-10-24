@@ -142,7 +142,7 @@ resource "aws_instance" "web_server" {
     echo "DB_NAME='csye6225'" >> /opt/csye6225/webapp/.env
     echo "DB_PORT='5432'" >> /opt/csye6225/webapp/.env
 
-    source /opt/csye6225/.env
+    source /opt/csye6225/webapp/.env
 
   EOF
 
