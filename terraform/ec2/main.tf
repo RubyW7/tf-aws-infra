@@ -135,12 +135,13 @@ resource "aws_instance" "web_server" {
     apt-get update -y
     apt-get upgrade -y
 
-    touch /opt/csye6225/.env
-    echo "DB_HOST='${aws_db_instance.my_rds.endpoint}'" >> /opt/csye6225/webapp/.env
-    echo "DB_USER='csye6225'" >> /etc/environment >> /opt/csye6225/webapp/.env
-    echo "DB_PASSWORD='Wyd0718520'" >> /opt/csye6225/webapp/.env
-    echo "DB_NAME='csye6225'" >> /opt/csye6225/webapp/.env
-    echo "DB_PORT='5432'" >> /opt/csye6225/webapp/.env
+    touch /opt/csye6225/webapp/.env
+    echo "" > /opt/csye6225/webapp/.env
+    echo "DB_HOST=$(echo ${aws_db_instance.my_rds.endpoint} | cut -d':' -f1)" >> /opt/csye6225/webapp/.env
+    echo "DB_USER=csye6225" >> /etc/environment >> /opt/csye6225/webapp/.env
+    echo "DB_PASSWORD=Wyd0718520" >> /opt/csye6225/webapp/.env
+    echo "DB_NAME=csye6225" >> /opt/csye6225/webapp/.env
+    echo "DB_PORT=5432" >> /opt/csye6225/webapp/.env
 
     source /opt/csye6225/webapp/.env
 
