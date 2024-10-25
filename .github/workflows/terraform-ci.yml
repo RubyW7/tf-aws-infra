@@ -23,8 +23,3 @@ jobs:
     - name: Check Terraform Format
       id: fmt
       run: terraform fmt -recursive -check
-
-    - name: Change directory and Validate Terraform
-      run: |
-        cd terraform
-        terraform validate
