@@ -39,7 +39,7 @@ resource "aws_security_group" "app_sg" {
   }
 
   tags = {
-    Name = "WebAppSecurityGroup"
+    Name = "${var.project_name}WebAppSecurityGroup"
   }
 }
 
@@ -78,7 +78,7 @@ resource "aws_db_subnet_group" "db_subnet_group" {
 }
 
 resource "aws_db_parameter_group" "custom_postgres_params" {
-  name   = "custom-postgres-params"
+  name   = "${var.project_name}-custom-postgres-params"
   family = "postgres16"
 
   parameter {
