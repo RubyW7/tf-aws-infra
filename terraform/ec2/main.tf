@@ -18,7 +18,7 @@ resource "aws_iam_role" "cloudwatch_role" {
           Service = "ec2.amazonaws.com"
         }
         Effect = "Allow"
-        Sid = ""
+        Sid    = ""
       },
     ]
   })

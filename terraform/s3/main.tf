@@ -3,8 +3,8 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "my_bucket" {
-  bucket = "tf-bucket-${uuid()}"
-  acl    = "private"
+  bucket        = "tf-bucket-${uuid()}"
+  acl           = "private"
   force_destroy = true
 }
 
@@ -12,7 +12,7 @@ resource "aws_s3_bucket_public_access_block" "example" {
   bucket = aws_s3_bucket.my_bucket.id
 
   block_public_acls   = true
-  block_public_policy = false 
+  block_public_policy = false
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "my_bucket" {
@@ -29,8 +29,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "my_bucket_lifecycle" {
   bucket = aws_s3_bucket.my_bucket.id
 
   rule {
-    id      = "auto-transition-to-IA"
-    status  = "Enabled"
+    id     = "auto-transition-to-IA"
+    status = "Enabled"
 
     transition {
       days          = 30
