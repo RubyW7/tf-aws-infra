@@ -205,10 +205,15 @@ resource "aws_instance" "web_server" {
     source /opt/csye6225/webapp/.env
 
     sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-    -a fetch-config \
-    -m onPremise \
-    -c file:/opt/csye6225/webapp/cloudwatch-config.json \
-    -s
+        -a fetch-config \
+        -m ec2 \
+        -c file:/opt/csye6225/webapp/cloudwatch-config.json \
+        -s
+
+
+    sudo systemctl start amazon-cloudwatch-agent.service
+    sudo systemctl enable amazon-cloudwatch-agent.service
+    sudo systemctl status -l amazon-cloudwatch-agent.service
 
   USERDATA
 
