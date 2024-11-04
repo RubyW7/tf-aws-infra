@@ -32,13 +32,13 @@ terraform init
 ### 2. Create Networking Resources
 For example:
 ```bash
-terraform apply -var="region=us-east-1" -var="vpc_cidr=10.0.0.0/16"
+terraform apply -var-file="demo.tfvars"
 ```
 
 ### 3. Clean Up Networking Resources
 For example:
 ```bash
-terraform destroy -var="region=us-east-1" -var="vpc_cidr=10.0.0.0/16"
+terraform destroy -var-file="demo.tfvars"
 ```
 
 ### re-init:

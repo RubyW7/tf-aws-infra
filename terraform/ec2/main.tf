@@ -1,7 +1,3 @@
-resource "aws_route53_zone" "main" {
-  name = "rubyw.xyz"
-}
-
 variable "instance_port" {
   default = "8080"
 }
@@ -177,6 +173,42 @@ resource "aws_db_instance" "my_rds" {
   }
 }
 
+variable "public_subnets" {
+  type = list(string)
+}
+
+resource "aws_lb" "lb" {
+  name               = "csye6225-lb"
+  internal           = false
+  load_balancer_type = "application"
+  ip_address_type    = "ipv4"
+  security_groups    = [aws_security_group.app_sg.id]
+  subnets            = var.public_subnets
+
+  tags = {
+    Application = "WebApp"
+  }
+}
+
+# Route 53 DNS 
+
+variable "subdomain_name" {
+  description = "subdomain record name"
+}
+
+#reference the existing zone by its ID or name
+data "aws_route53_zone" "sub_zone" {
+  name = var.subdomain_name
+}
+
+resource "aws_route53_record" "a_record" {
+  zone_id = data.aws_route53_zone.sub_zone.zone_id
+  name    = ""
+  type    = "A"
+  ttl     = "300"
+  records = [aws_instance.web_server.public_ip]
+}
+
 resource "aws_instance" "web_server" {
   ami                    = var.ami_id
   instance_type          = "t2.micro"
@@ -222,10 +254,3 @@ resource "aws_instance" "web_server" {
   }
 }
 
-resource "aws_route53_record" "a_record" {
-  zone_id = aws_route53_zone.main.zone_id
-  name    = "dev.rubyw.xyz"
-  type    = "A"
-  ttl     = "300"
-  records = [aws_instance.web_server.public_ip]
-}
