@@ -178,12 +178,12 @@ variable "public_subnets" {
 }
 
 resource "aws_lb" "lb" {
-  name = "csye6225-lb"
-  internal = false
+  name               = "csye6225-lb"
+  internal           = false
   load_balancer_type = "application"
-  ip_address_type = "ipv4"
-  security_groups = [aws_security_group.app_sg.id]
-  subnets = var.public_subnets
+  ip_address_type    = "ipv4"
+  security_groups    = [aws_security_group.app_sg.id]
+  subnets            = var.public_subnets
 
   tags = {
     Application = "WebApp"
@@ -203,7 +203,7 @@ data "aws_route53_zone" "sub_zone" {
 
 resource "aws_route53_record" "a_record" {
   zone_id = data.aws_route53_zone.sub_zone.zone_id
-  name = ""
+  name    = ""
   type    = "A"
   ttl     = "300"
   records = [aws_instance.web_server.public_ip]
