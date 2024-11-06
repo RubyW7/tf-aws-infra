@@ -11,7 +11,7 @@ resource "aws_s3_bucket" "my_bucket" {
 resource "aws_s3_bucket_public_access_block" "example" {
   bucket = aws_s3_bucket.my_bucket.id
 
-  block_public_acls   = true
+  block_public_acls   = false
   block_public_policy = false
 }
 
