@@ -8,6 +8,10 @@ variable "subnet_id" {
   description = "Subnet ID where the EC2 instance will be launched"
 }
 
+variable "bucket_name" {
+  type        = string
+}
+
 variable "ami_id" {
   type        = string
   description = "AMI ID for the EC2 instance"

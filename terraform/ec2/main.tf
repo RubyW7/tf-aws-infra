@@ -233,6 +233,7 @@ resource "aws_instance" "web_server" {
     touch /opt/csye6225/webapp/.env
     echo "DB_HOST=$(echo ${aws_db_instance.my_rds.endpoint} | cut -d':' -f1)" >> /opt/csye6225/webapp/.env
     echo "HOST=$${EC2_PUBLIC_IP}" >> /opt/csye6225/webapp/.env
+    echo "AWS_S3_BUCKET=${var.bucket_name}" >> /opt/csye6225/webapp/.env
 
     source /opt/csye6225/webapp/.env
 
