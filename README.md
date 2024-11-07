@@ -38,7 +38,7 @@ terraform apply -var-file="demo.tfvars"
 ### 3. Clean Up Networking Resources
 For example:
 ```bash
-terraform destroy -var-file="demo.tfvars"
+terraform destroy -var-file="prod.tfvars"
 ```
 
 ### re-init:
