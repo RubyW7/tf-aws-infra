@@ -175,7 +175,7 @@ resource "aws_autoscaling_policy" "scale_up_policy" {
   cooldown               = 60
   autoscaling_group_name = aws_autoscaling_group.asg.name
 
-  policy_type            = "SimpleScaling"
+  policy_type = "SimpleScaling"
 }
 
 #Autoscaling Group Scale Down policy and alarm
@@ -186,7 +186,7 @@ resource "aws_autoscaling_policy" "scale_down_policy" {
   cooldown               = 60
   autoscaling_group_name = aws_autoscaling_group.asg.name
 
-  policy_type            = "SimpleScaling"
+  policy_type = "SimpleScaling"
 }
 
 #Metric monitors CPU utilization
@@ -230,10 +230,10 @@ resource "aws_autoscaling_group" "asg" {
   max_size                  = 5
   desired_capacity          = 3
   health_check_grace_period = 300
-  default_cooldown    = 60
-  health_check_type   = "EC2"
-  vpc_zone_identifier = [aws_subnet.public_subnet[0].id, aws_subnet.public_subnet[1].id]
-  
+  default_cooldown          = 60
+  health_check_type         = "EC2"
+  vpc_zone_identifier       = [aws_subnet.public_subnet[0].id, aws_subnet.public_subnet[1].id]
+
   tag {
     key                 = "Name"
     value               = "csye6225-asg"
