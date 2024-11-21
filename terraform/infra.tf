@@ -310,6 +310,58 @@ output "current_account_id" {
   value = data.aws_caller_identity.current.account_id
 }
 
+
+resource "aws_lambda_function" "lambda_function" {
+  function_name = "csye6225-Lambda-function"
+  handler       = "index.handler"
+  runtime       = "nodejs14.x"
+  role          = aws_iam_role.lambda_exec.arn
+  timeout       = 300
+  memory_size   = 128
+
+  filename         = "${path.module}/lambda_function.zip"
+  source_code_hash = filebase64sha256("${path.module}/lambda_function.zip")
+
+  environment {
+    variables = {
+      EmailTrackingDynamoDBTable = aws_dynamodb_table.email_tracking.name
+      EmailTrackingDynamoDBRegion = var.vpc_region
+      DomainEnvironment = var.profile
+    }
+  }
+}
+
+resource "aws_dynamodb_table" "email_tracking" {
+  name           = "emailTrackingDynamoDBTable"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = 20
+  write_capacity = 20
+  hash_key       = "email"
+
+  attribute {
+    name = "email"
+    type = "S"
+  }
+}
+
+resource "aws_sns_topic" "sns_topic" {
+  name = "csye6225-SNSTopic"
+}
+
+resource "aws_sns_topic_subscription" "lambda_subscription" {
+  topic_arn = aws_sns_topic.sns_topic.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.lambda_function.arn
+}
+
+resource "aws_lambda_permission" "allow_sns" {
+  statement_id  = "AllowExecutionFromSNS"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_function.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.sns_topic.arn
+}
+
 # Customer Managed Key for EBS
 # Policy for autoscaling service role to of this ebs key
 
