@@ -87,6 +87,34 @@ resource "aws_db_instance" "csye6225_rds" {
   }
 }
 
+resource "aws_dynamodb_table" "csye6225" {
+  name           = "csye6225"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = 10
+  write_capacity = 5
+  hash_key       = "username"
+  range_key      = "usertoken"
+
+  attribute {
+    name = "username"
+    type = "S"
+  }
+
+  attribute {
+    name = "usertoken"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "tokenttl"
+    enabled        = true
+  }
+
+  tags = {
+    key = "value"
+  }
+}
+
 #Route 53 DNS
 #reference the existing zone by its ID or by its name.
 #update public subdomain zone 
@@ -141,6 +169,8 @@ resource "aws_launch_template" "lt" {
     touch /opt/csye6225/webapp/.env
     echo "DB_HOST=$(echo ${aws_db_instance.csye6225_rds.endpoint} | cut -d':' -f1)" >> /opt/csye6225/webapp/.env
     echo "AWS_S3_BUCKET=${aws_s3_bucket.s3_bucket.bucket}" >> /opt/csye6225/webapp/.env
+    echo "DYNAMO_DB_TABLE_NAME=${var.DYNAMO_DB_TABLE_NAME}" >> /opt/csye6225/webapp/.env
+    echo "SNS_TOPIC_ARN=${var.SNS_TOPIC_ARN}" >> /opt/csye6225/webapp/.env
 
     source /opt/csye6225/webapp/.env
 
@@ -310,40 +340,6 @@ output "current_account_id" {
   value = data.aws_caller_identity.current.account_id
 }
 
-
-resource "aws_lambda_function" "lambda_function" {
-  function_name = "csye6225-Lambda-function"
-  handler       = "index.handler"
-  runtime       = "nodejs14.x"
-  role          = aws_iam_role.lambda_exec.arn
-  timeout       = 300
-  memory_size   = 128
-
-  filename         = "${path.module}/lambda_function.zip"
-  source_code_hash = filebase64sha256("${path.module}/lambda_function.zip")
-
-  environment {
-    variables = {
-      EmailTrackingDynamoDBTable = aws_dynamodb_table.email_tracking.name
-      EmailTrackingDynamoDBRegion = var.vpc_region
-      DomainEnvironment = var.profile
-    }
-  }
-}
-
-resource "aws_dynamodb_table" "email_tracking" {
-  name           = "emailTrackingDynamoDBTable"
-  billing_mode   = "PROVISIONED"
-  read_capacity  = 20
-  write_capacity = 20
-  hash_key       = "email"
-
-  attribute {
-    name = "email"
-    type = "S"
-  }
-}
-
 resource "aws_sns_topic" "sns_topic" {
   name = "csye6225-SNSTopic"
 }
@@ -360,6 +356,23 @@ resource "aws_lambda_permission" "allow_sns" {
   function_name = aws_lambda_function.lambda_function.function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.sns_topic.arn
+}
+
+# Lambda function
+resource "aws_lambda_function" "lambda_function" {
+  function_name = "MyLambdaFunction"
+  filename      = "./function.zip"
+
+  handler       = "index.handler"
+  runtime       = "nodejs18.x"
+  role          = aws_iam_role.lambda_execution_role.arn
+
+  environment {
+    variables = {
+      MAILGUN_API_KEY  = var.MAILGUN_API_KEY
+      MAILGUN_DOMAIN   = var.MAILGUN_DOMAIN
+    }
+  }
 }
 
 # Customer Managed Key for EBS

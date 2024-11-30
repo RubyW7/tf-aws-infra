@@ -88,19 +88,68 @@ resource "aws_iam_role_policy_attachment" "asg_policy_attachment" {
   role       = aws_iam_role.EC2-CSYE6225.name
 }
 
-
-resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
-  role       = aws_iam_role.lambda_exec.id
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+resource "aws_iam_policy" "dynamo_db_policy" {
+  name   = "dynamo_db_policy"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:DescribeTable"
+        ]
+        Resource = "${aws_dynamodb_table.csye6225.arn}"
+      }
+    ]
+  })
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_ses_access" {
-  role       = aws_iam_role.lambda_exec.id
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
+resource "aws_iam_role_policy_attachment" "dynamo_policy_attachment" {
+  policy_arn = aws_iam_policy.dynamo_db_policy.arn
+  role       = aws_iam_role.EC2-CSYE6225.name
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_dynamodb_access" {
-  role       = aws_iam_role.lambda_exec.id
-  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+resource "aws_iam_role" "lambda_execution_role" {
+  name = "lambda_execution_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      },
+    ]
+  })
 }
+
+resource "aws_iam_role_policy" "lambda_policy" {
+  name = "lambda_policy"
+  role = aws_iam_role.lambda_execution_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "dynamodb:*",
+          "sns:*",
+          "logs:*"
+        ],
+        Effect = "Allow",
+        Resource = "*"
+      },
+    ]
+  })
+}
+
 
