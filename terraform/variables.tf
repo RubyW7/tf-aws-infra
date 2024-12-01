@@ -7,6 +7,14 @@ variable "vpc_name" {
   default     = "vpc-1"
 }
 
+variable "DYNAMO_DB_TABLE_NAME" {
+  default     = "csye6225"
+}
+
+variable "SNS_TOPIC_ARN" {
+  default     = "arn:aws:sns:us-east-1:703671935232:csye6225-SNSTopic"
+}
+
 variable "cidr_block" {
   description = "CIDR block for VPC"
   default     = "10.0.0.0/16"
@@ -70,3 +78,12 @@ variable "subdomain_ns_ttl" {
   default     = "300"
 }
 
+variable "MAILGUN_API_KEY" {
+  description = "MAILGUN_API_KEY"
+  type        = string
+}
+
+variable "MAILGUN_DOMAIN" {
+  description = "MAILGUN_DOMAIN"
+  type        = string
+}
