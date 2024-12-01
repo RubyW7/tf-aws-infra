@@ -32,7 +32,7 @@ terraform init
 ### 2. Create Networking Resources
 For example:
 ```bash
-terraform apply -var-file="demo.tfvars"
+terraform apply -var-file="prod.tfvars"
 ```
 
 ### 3. Clean Up Networking Resources
