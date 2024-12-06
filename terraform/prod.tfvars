@@ -9,7 +9,7 @@ environment          = "demo"
 key_name             = "6225_demo"
 subdomain_name       = "demo.rubyw.xyz"
 subdomain_ns_ttl     = "300"
-ami                  = "ami-0822ce9dcfe5266e7"
+ami                  = "ami-03488fdb011e45cb5"
 MAILGUN_API_KEY      = "0f841f2f8ecfec4ccd9658f8c02a44ce-c02fd0ba-f06ff8b0"
 MAILGUN_DOMAIN       = "demo.rubyw.xyz"
 

@@ -76,9 +76,7 @@ resource "aws_iam_policy" "load_balancer_autoscaling_policy" {
           "autoscaling:*",
           "elasticloadbalancing:*",
           "ec2:DescribeInstances",
-          "ec2:DescribeInstanceStatus",
-          "kms:Decrypt",
-          "kms:GenerateDataKey"
+          "ec2:DescribeInstanceStatus"
         ]
         Resource = "*"
       }
@@ -145,79 +143,13 @@ resource "aws_iam_role_policy" "lambda_policy" {
         Action = [
           "dynamodb:*",
           "sns:*",
-          "logs:*",
-          "secretsmanager:GetSecretValue",
-          "kms:Decrypt"
+          "logs:*"
         ],
         Effect = "Allow",
         Resource = "*"
       },
     ]
   })
-}
-
-# IAM policy for allow web application role to use kms keys
-resource "aws_iam_policy" "webapp_kms_policy" {
-  name        = "WebApp-KMS-Policy"
-  description = "Permissions for the KMS to create secure policies."
-
-  policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Action" : [
-          "kms:Decrypt",
-          "kms:Encrypt",
-          "kms:RevokeGrant",
-          "kms:GenerateDataKey",
-          "kms:GenerateDataKeyWithoutPlaintext",
-          "kms:DescribeKey",
-          "kms:CreateGrant",
-          "kms:ListGrants",
-          "secretsmanager: GetSecretValue"
-        ],
-        "Effect" : "Allow",
-        "Resource" : [
-          aws_kms_key.ebs.arn,
-          aws_kms_key.rds.arn,
-          aws_kms_key.s3_bucket_kms.arn
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "kms_policy_attachment" {
-  policy_arn = aws_iam_policy.webapp_kms_policy.arn
-  role       = aws_iam_role.EC2-CSYE6225.name
-}
-
-# IAM policy for allow web application role to use kms keys
-resource "aws_iam_policy" "secrets_manager_policy" {
-  name        = "WebApp-Secrets-Manager-Policy"
-  description = "Permissions for the KMS to create secure policies."
-
-  policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Action" : [
-          "secretsmanager:GetSecretValue",
-          "kms:Decrypt"
-        ],
-        "Effect" : "Allow",
-        "Resource" : [
-          aws_secretsmanager_secret.db_secret.arn,
-          aws_secretsmanager_secret.email_credentials.arn
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "secrets_manager_policy_attachment" {
-  policy_arn = aws_iam_policy.secrets_manager_policy.arn
-  role       = aws_iam_role.EC2-CSYE6225.name
 }
 
 
