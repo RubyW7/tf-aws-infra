@@ -12,6 +12,90 @@ locals {
   vm-name = "${random_string.vm-name.result}-${var.environment}"
 }
 
+resource "random_password" "db_password" {
+  length           = 16
+  special          = true
+  override_special = "_%@"
+}
+
+#KMS for DB
+resource "aws_kms_key" "db_encryption_key" {
+  description             = "KMS Key for encrypting database secrets"
+  enable_key_rotation     = true
+  key_usage               = "ENCRYPT_DECRYPT"
+  deletion_window_in_days = 30
+  rotation_period_in_days = 90
+
+  tags = {
+    Purpose = "Database Encryption"
+  }
+}
+
+resource "aws_secretsmanager_secret" "db_secret" {
+  name            = "dbPassword3"
+  description     = "Database password for web application"
+  recovery_window_in_days = 0
+  kms_key_id      = aws_kms_key.db_encryption_key.key_id
+
+  tags = {
+    Environment = "production"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "db_secret_version" {
+  secret_id     = aws_secretsmanager_secret.db_secret.id
+  secret_string = jsonencode({
+    "password" = random_password.db_password.result
+  })
+}
+
+# KMS Key for S3
+resource "aws_kms_key" "s3_bucket_kms" {
+  description             = "KMS key for encrypting S3 bucket"
+  enable_key_rotation     = true
+  key_usage               = "ENCRYPT_DECRYPT"
+  deletion_window_in_days = 30
+  rotation_period_in_days = 90
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Id      = "key-s3-policy",
+    Statement : [
+      {
+        Sid    = "EnableRootPermissions",
+        Effect = "Allow",
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        },
+        Action   = "kms:*",
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowS3Access",
+        Effect = "Allow",
+        Principal = {
+          AWS = aws_iam_role.EC2-CSYE6225.arn
+        },
+        Action = [
+          "kms:GenerateDataKey",
+          "kms:Decrypt",
+          "kms:DescribeKey"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "S3KMSKey"
+  }
+}
+
+resource "aws_kms_alias" "s3_bucket_kms_alias" {
+  name          = "alias/s3-bucket-key"
+  target_key_id = aws_kms_key.s3_bucket_kms.id
+}
+
 #S3 bucket
 resource "aws_s3_bucket" "s3_bucket" {
   bucket        = "tf-bucket-${uuid()}"
@@ -33,6 +117,11 @@ resource "aws_s3_bucket" "s3_bucket" {
         sse_algorithm = "AES256"
       }
     }
+  }
+
+  tags = {
+    Name        = "secure-bucket"
+    Environment = "prod"
   }
 }
 
@@ -63,7 +152,13 @@ resource "aws_db_parameter_group" "mydb_param_group" {
   }
 }
 
-# Customer managed key for rds
+resource "aws_kms_key" "rds" {
+  description           = "KMS key for RDS Encryption"
+  enable_key_rotation     = true
+  key_usage               = "ENCRYPT_DECRYPT"
+  deletion_window_in_days = 30
+  rotation_period_in_days = 90
+}
 
 # Rds
 resource "aws_db_instance" "csye6225_rds" {
@@ -75,13 +170,15 @@ resource "aws_db_instance" "csye6225_rds" {
   db_name                = var.db_name
   multi_az               = false
   username               = var.db_username
-  password               = var.db_password
+  password               = jsondecode(aws_secretsmanager_secret_version.db_secret_version.secret_string).password
   publicly_accessible    = false
   parameter_group_name   = aws_db_parameter_group.mydb_param_group.name
   db_subnet_group_name   = aws_db_subnet_group.rds_subnet_group.name
   vpc_security_group_ids = [aws_security_group.database_security_group.id]
   skip_final_snapshot    = true
+  kms_key_id             = aws_kms_key.rds.arn
   storage_encrypted      = true
+
   tags = {
     "Name" = "rds-csye6225"
   }
@@ -136,6 +233,7 @@ resource "aws_route53_record" "a_record" {
 }
 
 resource "aws_launch_template" "lt" {
+  depends_on    = [aws_secretsmanager_secret_version.db_secret_version]
   name          = "launch-template-6225"
   image_id      = var.ami
   instance_type = "t2.micro"
@@ -157,6 +255,8 @@ resource "aws_launch_template" "lt" {
       volume_size           = 25
       volume_type           = "gp2"
       delete_on_termination = true
+      kms_key_id  = aws_kms_key.ebs.arn
+      encrypted              = true
     }
   }
 
@@ -165,8 +265,16 @@ resource "aws_launch_template" "lt" {
     
     apt-get update -y
     apt-get upgrade -y
+    sudo apt install awscli -y
+    sudo apt install jq -y
+
+    SECRET_ID="${aws_secretsmanager_secret.db_secret.arn}" 
+    SECRET_STRING=$(aws secretsmanager get-secret-value --secret-id $SECRET_ID --region ${var.vpc_region} --query SecretString --output text)
+    DB_PASSWORD=$(echo $SECRET_STRING | jq -r .password)
 
     touch /opt/csye6225/webapp/.env
+    echo "SECRET_STRING=$SECRET_STRING" >> /opt/csye6225/webapp/.env
+    echo "DB_PASSWORD=$DB_PASSWORD" >> /opt/csye6225/webapp/.env
     echo "DB_HOST=$(echo ${aws_db_instance.csye6225_rds.endpoint} | cut -d':' -f1)" >> /opt/csye6225/webapp/.env
     echo "AWS_S3_BUCKET=${aws_s3_bucket.s3_bucket.bucket}" >> /opt/csye6225/webapp/.env
     echo "DYNAMO_DB_TABLE_NAME=${var.DYNAMO_DB_TABLE_NAME}" >> /opt/csye6225/webapp/.env
@@ -318,14 +426,15 @@ resource "aws_lb" "lb" {
 data "aws_acm_certificate" "ssl_certificate" {
   domain   = var.subdomain_name
   statuses = ["ISSUED"]
+  most_recent = true
 }
 
 # Load Balancer Listener Foward to Targets Group 
 resource "aws_lb_listener" "front_end" {
   load_balancer_arn = aws_lb.lb.arn
-  port              = 80
-  protocol          = "HTTP"
-  #certificate_arn   = data.aws_acm_certificate.ssl_certificate.arn
+  port              = 443
+  protocol          = "HTTPS"
+  certificate_arn   = data.aws_acm_certificate.ssl_certificate.arn
 
   default_action {
     type             = "forward"
@@ -358,6 +467,33 @@ resource "aws_lambda_permission" "allow_sns" {
   source_arn    = aws_sns_topic.sns_topic.arn
 }
 
+resource "aws_kms_key" "email_service_kms" {
+  description             = "KMS key for encrypting email service credentials"
+  enable_key_rotation     = true
+  key_usage               = "ENCRYPT_DECRYPT"
+  deletion_window_in_days = 30
+  rotation_period_in_days = 90
+}
+
+resource "aws_kms_alias" "email_service_alias" {
+  name          = "alias/email-service-key"
+  target_key_id = aws_kms_key.email_service_kms.id
+}
+
+resource "aws_secretsmanager_secret" "email_credentials" {
+  name       = "email_service_credentials3"
+  recovery_window_in_days = 0
+  kms_key_id = aws_kms_key.email_service_kms.arn
+}
+
+resource "aws_secretsmanager_secret_version" "email_credentials_version" {
+  secret_id = aws_secretsmanager_secret.email_credentials.id
+
+  secret_string = jsonencode({
+    apikey = var.MAILGUN_API_KEY
+  })
+}
+
 # Lambda function
 resource "aws_lambda_function" "lambda_function" {
   function_name = "MyLambdaFunction"
@@ -369,14 +505,89 @@ resource "aws_lambda_function" "lambda_function" {
 
   environment {
     variables = {
-      MAILGUN_API_KEY  = var.MAILGUN_API_KEY
-      MAILGUN_DOMAIN   = var.MAILGUN_DOMAIN
+      SECRET_ID = aws_secretsmanager_secret.email_credentials.name
     }
   }
 }
 
 # Customer Managed Key for EBS
 # Policy for autoscaling service role to of this ebs key
+resource "aws_kms_key" "ebs" {
+  description             = "KMS key for EBS volume"
+  deletion_window_in_days = 30
+  rotation_period_in_days = 90
+  enable_key_rotation     = true
+  policy = jsonencode(
+    {
+      "Version" : "2012-10-17",
+      "Id" : "key-default-1",
+      "Statement" : [
+        {
+          "Sid" : "Enable IAM User Permissions",
+          "Effect" : "Allow",
+          "Principal" : {
+            "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          },
+          "Action" : [
+            "kms:Create*",
+            "kms:Describe*",
+            "kms:Enable*",
+            "kms:List*",
+            "kms:Put*",
+            "kms:Update*",
+            "kms:Revoke*",
+            "kms:Disable*",
+            "kms:Get*",
+            "kms:Delete*",
+            "kms:ScheduleKeyDeletion",
+            "kms:CancelKeyDeletion"
+          ],
+          "Resource" : "*"
+        },
+        {
+          "Sid" : "Allow service-linked role use of the CMK",
+          "Effect" : "Allow",
+          "Principal" : {
+            "AWS" : [
+              "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+            ]
+          },
+          "Action" : [
+            "kms:Encrypt",
+            "kms:Decrypt",
+            "kms:ReEncrypt*",
+            "kms:GenerateDataKey*",
+            "kms:DescribeKey"
+          ],
+          "Resource" : "*"
+        },
+        {
+          "Sid" : "Allow attachment of persistent resources",
+          "Effect" : "Allow",
+          "Principal" : {
+            "AWS" : [
+              "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+            ]
+          },
+          "Action" : [
+            "kms:CreateGrant"
+          ],
+          "Resource" : "*",
+          "Condition" : {
+            "Bool" : {
+              "kms:GrantIsForAWSResource" : true
+            }
+          }
+        }
+      ]
+    }
+  )
+}
+
+resource "aws_ebs_default_kms_key" "ebs" {
+  key_arn = aws_kms_key.ebs.arn
+}
+
 
 # resource "aws_instance" "EC2_instance" {
 #   ami                    = var.ami
